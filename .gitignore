@@ -1,3 +1,36 @@
 node_modules/
 dist/
 .DS_Store
+
+# Local environment, build outputs and temporary files
+*.log
+*.bak
+*.backup
+*.keystore
+*.jks
+**/debug.keystore
+local.properties
+.gradle/
+build/
+.cxx/
+.idea/
+.bundle/
+**/.bundle/
+
+# Local backups and diagnostic files
+MESHX-original-App.tsx
+MESHX-original-styles.css
+README-backup.md
+vite.config.ts.backup
+src/App-before-original-restore.tsx
+src/App.tsx.before-*.bak
+src/bridge/*.bak
+android-app/App.backup.tsx
+android-app/App.tsx.before-*.bak
+android-app/App.tsx.with-markdown-fences.bak
+android-app/gradle-debug.txt
+android-app/android/build-error.txt
+
+# Accidental local files
+/config.json
+/android-app/android/App.tsx

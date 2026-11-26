@@ -17,3 +17,25 @@
 
 /* Deeper purple pass + scroll choreography. */
 :root{--purple:#987bd5;--purple-deep:#7558b2}.primary-btn{background:var(--purple);box-shadow:0 8px 24px rgba(117,88,178,.18)}.hero-chat,.command-hero{background:linear-gradient(120deg,rgba(117,88,178,.18),rgba(17,21,28,.9) 58%)}.layout-list button.selected{background:linear-gradient(90deg,rgba(117,88,178,.16),transparent);border-color:rgba(152,123,213,.26)}.reveal-on-scroll{opacity:0;transform:translateY(20px) scale(.985);transition:opacity .62s ease var(--reveal-delay,0ms),transform .62s cubic-bezier(.22,.8,.25,1) var(--reveal-delay,0ms)}.reveal-on-scroll.is-visible{opacity:1;transform:translateY(0) scale(1)}.content .command-hero.reveal-on-scroll{transform:translateY(26px) scale(.98)}.content .command-hero.reveal-on-scroll.is-visible{transform:translateY(0) scale(1)}.content .command-stats.reveal-on-scroll{transform:translateY(12px)}.content .command-stats.reveal-on-scroll.is-visible{transform:translateY(0)}.content .transfer-row.reveal-on-scroll,.content .nearby-row.reveal-on-scroll{transform:translateX(-16px)}.content .transfer-row.reveal-on-scroll.is-visible,.content .nearby-row.reveal-on-scroll.is-visible{transform:translateX(0)}.content .network-stat.reveal-on-scroll{transform:translateY(14px)}.content .network-stat.reveal-on-scroll.is-visible{transform:translateY(0)}@media(prefers-reduced-motion:reduce){.reveal-on-scroll,.content .command-hero.reveal-on-scroll,.content .command-stats.reveal-on-scroll,.content .transfer-row.reveal-on-scroll,.content .nearby-row.reveal-on-scroll,.content .network-stat.reveal-on-scroll{opacity:1;transform:none;transition:none}}
+
+/* Stage 1 Native Bridge diagnostics panel on Debug view. */
+.native-bridge-card{border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:20px;margin-bottom:24px}
+.native-bridge-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.native-bridge-head h3{font-size:18px;margin:7px 0 4px}
+.native-bridge-head p{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
+.native-bridge-actions{display:flex;gap:8px;flex-wrap:wrap}
+.native-bridge-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}
+.native-bridge-grid>div{border:1px solid var(--line);background:var(--panel2);border-radius:11px;padding:12px}
+.native-bridge-grid small,.native-bridge-grid strong,.native-bridge-grid span{display:block}
+.native-bridge-grid small{font:500 9px 'DM Mono',monospace;color:var(--faint)}
+.native-bridge-grid strong{font-size:12px;margin:6px 0 4px;word-break:break-word}
+.native-bridge-grid span{font-size:10px;color:var(--muted);word-break:break-word}
+.native-bridge-logs{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
+.native-log-row{display:grid;grid-template-columns:70px 145px 150px 1fr;gap:10px;align-items:center;font:10px 'DM Mono',monospace;background:var(--panel2);border:1px solid rgba(40,48,59,.7);border-radius:8px;padding:8px 10px}
+.native-log-row span{color:var(--cyan)}
+.native-log-row strong{color:#eef0f6;font-weight:500}
+.native-log-row code{color:var(--purple);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.native-log-row b{color:var(--green);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.native-log-row b.warn{color:var(--amber)}
+@media(max-width:900px){.native-bridge-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.native-log-row{grid-template-columns:64px 1fr;gap:4px 10px}}
+@media(max-width:760px){.native-bridge-grid{grid-template-columns:1fr}}
