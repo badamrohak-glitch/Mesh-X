@@ -84,3 +84,21 @@
 - **Stage 8 — Internet Sync**: Firebase Auth + Firestore + FCM, sync user's own pending messages on internet restore, reconcile delivery states without violating relay data rule.
 - **Stage 9 — Background Operation**: Foreground service (user-controlled) for active mesh sessions + WorkManager for deferred cleanup/sync within Android background limits.
 - **Stage 10 — Security, Testing & Release**: End-to-end encryption review, malformed packet fuzzing, multi-device physical verification, standalone release APK.
+
+## C3 — Foreground Service Startup Error Handling
+
+**Status:** Code corrected — Android debug build successful.
+
+### Changes
+- Added exception handling around `MeshForegroundService.start()`.
+- Handles `SecurityException` when Android denies foreground-service startup.
+- Handles `IllegalStateException` when Android restricts foreground-service startup.
+- Returns descriptive bridge errors instead of allowing startup exceptions to escape.
+
+### Verification
+- Android debug build: `assembleDebug` — BUILD SUCCESSFUL.
+- Physical-device foreground-service startup and BLE operation tests: pending.
+
+### Limitation
+Foreground-service startup is asynchronous. The immediate bridge response does not guarantee that the service has completed startup or that BLE scanning and advertising are active.
+

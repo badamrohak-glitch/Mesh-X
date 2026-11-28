@@ -10,7 +10,24 @@ export type BridgeErrorCode =
   | 'BRIDGE_UNAVAILABLE'
   | 'TIMEOUT';
 
-export type BridgeRequestType = 'BRIDGE_PING' | 'GET_RUNTIME_INFO' | string;
+export type BridgeRequestType =
+  | 'BRIDGE_PING'
+  | 'GET_RUNTIME_INFO'
+  | 'GET_IDENTITY'
+  | 'REQUEST_BLUETOOTH_PERMISSIONS'
+  | 'GET_DISCOVERY_CAPABILITIES'
+  | 'START_DISCOVERY'
+  | 'STOP_DISCOVERY'
+  | 'GET_NEARBY_DEVICES'
+  | 'CONNECT_PEER'
+  | 'DISCONNECT_PEER'
+  | 'START_BACKGROUND_SERVICE'
+  | 'STOP_BACKGROUND_SERVICE'
+  | 'GET_BACKGROUND_STATUS'
+  | 'GET_LOCAL_STORAGE_STATS'
+  | 'SEND_MESSAGE'
+  | 'GET_MESSAGES'
+  | string;
 
 export interface BridgeRequest<TPayload = Record<string, unknown>> {
   version: number;
@@ -92,7 +109,7 @@ interface PendingRequest {
   type: string;
   startedAt: number;
   resolve: (response: BridgeResponse<any>) => void;
-  timerId: number;
+  timerId: ReturnType<typeof setTimeout>;
 }
 
 const pendingRequests = new Map<string, PendingRequest>();
@@ -129,7 +146,7 @@ function handleIncomingBridgeMessage(rawJson: string) {
     if (!pending) {
       return;
     }
-    window.clearTimeout(pending.timerId);
+    globalThis.clearTimeout(pending.timerId);
     pendingRequests.delete(parsed.requestId);
 
     const latencyMs = Math.max(0, Date.now() - pending.startedAt);
@@ -231,7 +248,7 @@ export function sendBridgeRequest<TData = Record<string, unknown>>(
   };
 
   return new Promise<BridgeResponse<TData>>((resolve) => {
-    const timerId = window.setTimeout(() => {
+    const timerId = globalThis.setTimeout(() => {
       if (!pendingRequests.has(requestId)) {
         return;
       }
@@ -270,7 +287,7 @@ export function sendBridgeRequest<TData = Record<string, unknown>>(
     try {
       window.ReactNativeWebView!.postMessage(JSON.stringify(request));
     } catch (err) {
-      window.clearTimeout(timerId);
+      globalThis.clearTimeout(timerId);
       pendingRequests.delete(requestId);
       const message = err instanceof Error ? err.message : 'Failed to post message to WebView.';
       resolve({
@@ -301,12 +318,27 @@ export function testUnknownBridgeCommand(): Promise<BridgeResponse<any>> {
   return sendBridgeRequest('UNKNOWN_COMMAND', {});
 }
 
+export interface DeviceIdentityData {
+  deviceId: string;
+  publicKey: string;
+  algorithm: string;
+}
+
 /**
- * Request device identity (Phaseâ€¯3).
+ * Request device identity (Phase 3).
  * Returns a BridgeResponse whose `data` contains `{ deviceId, publicKey, algorithm }`.
  */
-export function getDeviceIdentity(): Promise<BridgeResponse<any>> {
-  return sendBridgeRequest('GET_IDENTITY', {});
+export function getDeviceIdentity(): Promise<BridgeResponse<DeviceIdentityData>> {
+  return sendBridgeRequest<DeviceIdentityData>('GET_IDENTITY', {});
+}
+
+// Phase 5 messaging helpers
+export function sendMessage(peerDeviceId: string, body: string): Promise<BridgeResponse<any>> {
+  return sendBridgeRequest<any>('SEND_MESSAGE', { peerDeviceId, body });
+}
+
+export function getMessages(peerDeviceId: string): Promise<BridgeResponse<any>> {
+  return sendBridgeRequest<any>('GET_MESSAGES', { peerDeviceId });
 }
 
 // MESH-X BLE discovery
@@ -316,6 +348,36 @@ export interface NearbyDevice {
   name: string | null;
   rssi: number;
   lastSeen: number;
+  fingerprint?: string | null;
+  deviceId?: string | null;
+  publicKey?: string | null;
+  connectionState?: 'discovered' | 'connecting' | 'connected' | 'disconnected' | string;
+}
+
+export interface DiscoveryCapabilitiesData {
+  bleSupported: boolean;
+  bluetoothEnabled: boolean;
+  advertisingSupported: boolean;
+  permissionsGranted: boolean;
+  locationRequired: boolean;
+  locationEnabled: boolean;
+  discoveryActive: boolean;
+}
+
+export interface BackgroundStatusData {
+  running: boolean;
+  enabled: boolean;
+  pendingResume?: boolean;
+  requested?: boolean;
+  scanning?: boolean;
+  advertising?: boolean;
+  error?: string;
+}
+
+export interface LocalStorageStatsData {
+  peerCount: number;
+  messageCount: number;
+  relayQueueCount: number;
 }
 
 export interface BluetoothPermissionData {
@@ -335,8 +397,12 @@ export function requestBluetoothPermissions(): Promise<BridgeResponse<BluetoothP
   );
 }
 
-export function startDiscovery(): Promise<BridgeResponse<{ started: boolean }>> {
-  return sendBridgeRequest<{ started: boolean }>('START_DISCOVERY', {});
+export function getDiscoveryCapabilities(): Promise<BridgeResponse<DiscoveryCapabilitiesData>> {
+  return sendBridgeRequest<DiscoveryCapabilitiesData>('GET_DISCOVERY_CAPABILITIES', {});
+}
+
+export function startDiscovery(lowPowerMode = false): Promise<BridgeResponse<{ started: boolean; advertising?: boolean; scanning?: boolean }>> {
+  return sendBridgeRequest<{ started: boolean; advertising?: boolean; scanning?: boolean }>('START_DISCOVERY', { lowPowerMode });
 }
 
 export function stopDiscovery(): Promise<BridgeResponse<{ stopped: boolean }>> {
@@ -345,4 +411,28 @@ export function stopDiscovery(): Promise<BridgeResponse<{ stopped: boolean }>> {
 
 export function getNearbyDevices(): Promise<BridgeResponse<NearbyDevicesData>> {
   return sendBridgeRequest<NearbyDevicesData>('GET_NEARBY_DEVICES', {});
+}
+
+export function connectPeer(address: string): Promise<BridgeResponse<{ connecting: boolean; address: string }>> {
+  return sendBridgeRequest<{ connecting: boolean; address: string }>('CONNECT_PEER', { address });
+}
+
+export function disconnectPeer(address: string): Promise<BridgeResponse<{ disconnected: boolean; address: string }>> {
+  return sendBridgeRequest<{ disconnected: boolean; address: string }>('DISCONNECT_PEER', { address });
+}
+
+export function startBackgroundService(): Promise<BridgeResponse<BackgroundStatusData>> {
+  return sendBridgeRequest<BackgroundStatusData>('START_BACKGROUND_SERVICE', {});
+}
+
+export function stopBackgroundService(): Promise<BridgeResponse<BackgroundStatusData>> {
+  return sendBridgeRequest<BackgroundStatusData>('STOP_BACKGROUND_SERVICE', {});
+}
+
+export function getBackgroundStatus(): Promise<BridgeResponse<BackgroundStatusData>> {
+  return sendBridgeRequest<BackgroundStatusData>('GET_BACKGROUND_STATUS', {});
+}
+
+export function getLocalStorageStats(): Promise<BridgeResponse<LocalStorageStatsData>> {
+  return sendBridgeRequest<LocalStorageStatsData>('GET_LOCAL_STORAGE_STATS', {});
 }

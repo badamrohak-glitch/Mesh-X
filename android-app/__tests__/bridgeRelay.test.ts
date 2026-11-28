@@ -104,4 +104,45 @@ describe('bridgeRelay', () => {
     expect(parsed.ok).toBe(false);
     expect(parsed.error.code).toBe('TIMEOUT');
   });
+
+  test('relays GET_IDENTITY request and preserves deviceId and publicKey without exposing privateKey', async () => {
+    const mockNative: MeshXNativeModule = {
+      dispatchRequest: jest.fn(async (rawJson: string) => {
+        const parsed = JSON.parse(rawJson);
+        return JSON.stringify({
+          version: 1,
+          kind: 'response',
+          requestId: parsed.requestId,
+          type: 'GET_IDENTITY',
+          ok: true,
+          data: {
+            deviceId: '550e8400-e29b-41d4-a716-446655440000',
+            publicKey: 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFakePublicKeyBase64==',
+            algorithm: 'EC',
+          },
+          timestamp: 99999,
+        });
+      }),
+    };
+
+    const req = JSON.stringify({
+      version: 1,
+      kind: 'request',
+      requestId: 'req-identity-1',
+      type: 'GET_IDENTITY',
+      payload: {},
+      timestamp: 1000,
+    });
+
+    const res = JSON.parse(await relayWebViewMessageToNative(req, mockNative));
+    expect(mockNative.dispatchRequest).toHaveBeenCalledWith(req);
+    expect(res.ok).toBe(true);
+    expect(res.type).toBe('GET_IDENTITY');
+    expect(res.data.deviceId).toBe('550e8400-e29b-41d4-a716-446655440000');
+    expect(res.data.publicKey).toBe(
+      'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEFakePublicKeyBase64==',
+    );
+    expect(res.data.algorithm).toBe('EC');
+    expect(res.data.privateKey).toBeUndefined();
+  });
 });

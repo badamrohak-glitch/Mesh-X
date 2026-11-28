@@ -99,9 +99,50 @@ Error codes:
 
 ---
 
-## 3. Stage 1 Commands
+## 3. Registered Commands (v1)
 
 | Command | Payload | Response `data` |
 |---------|---------|-----------------|
 | `BRIDGE_PING` | `{ echo?: string }` (max 256 chars) | `{ pong, echo, receivedAtMs, nativeTimestampMs, uptimeMs }` |
 | `GET_RUNTIME_INFO` | `{}` | `{ protocolVersion, platform, manufacturer, model, androidRelease, sdkInt, appId, appVersionName, appVersionCode, isDebugBuild, availableCommands }` |
+| `GET_IDENTITY` | `{}` | `{ deviceId, publicKey, algorithm }` — `publicKey` is Base64 X.509 SPKI (`NO_WRAP`) for the Android Keystore EC P-256 (`secp256r1`) key pair; private keys never leave Android Keystore |
+| `GET_DISCOVERY_CAPABILITIES` | `{}` | `{ bleSupported, bluetoothEnabled, advertisingSupported, permissionsGranted, locationRequired, locationEnabled, discoveryActive }` |
+| `START_DISCOVERY` | `{ lowPowerMode?: boolean }` | `{ started, advertising, scanning }` |
+| `STOP_DISCOVERY` | `{}` | `{ stopped }` |
+| `GET_NEARBY_DEVICES` | `{}` | `{ devices }` |
+| `CONNECT_PEER` | `{ address: string }` | `{ connecting, address }` |
+| `DISCONNECT_PEER` | `{ address: string }` | `{ disconnected, address }` |
+| `START_BACKGROUND_SERVICE` | `{}` | `{ running, enabled }` |
+| `STOP_BACKGROUND_SERVICE` | `{}` | `{ running, enabled }` |
+| `GET_BACKGROUND_STATUS` | `{}` | `{ running, enabled, pendingResume }` |
+| `GET_LOCAL_STORAGE_STATS` | `{}` | `{ peerCount, messageCount, relayQueueCount, peers }` |
+
+## GET_MESSAGES Command Registration — C5 Correction
+
+**Status: Fixed — Android build successful**
+
+The native bridge now registers both messaging commands independently in
+`MeshXBridgeModule.kt`:
+
+- `SEND_MESSAGE`
+- `GET_MESSAGES`
+
+Both commands use `MessagingHandler`, with the command type supplied
+through its constructor. The dispatcher registers each handler by its
+`commandType`.
+
+### Verification
+
+- Confirmed both handler registrations in `MeshXBridgeModule.kt`.
+- Android debug build completed successfully using
+  `.\gradlew.bat assembleDebug --no-daemon`.
+- Build result: `BUILD SUCCESSFUL`.
+
+### Remaining limitations
+
+- This verifies compilation and command registration, not end-to-end
+  message delivery on physical devices.
+- Messages are currently stored and retrieved locally.
+- Actual peer-to-peer delivery and multi-hop relay remain future work.
+- `GetMessagesHandler.kt` is now redundant and has not yet been removed.
+
